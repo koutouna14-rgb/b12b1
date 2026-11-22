@@ -1,0 +1,68 @@
+name: Build DiscordBridge
+
+on:
+  push:
+    branches: [main, master]
+    tags: ['v*']
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: build-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # Java 21 builds both modules (the Paper jar needs 21, the Velocity jar is compiled for Java 17)
+      - name: Set up Java 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+
+      # Retries because PaperMC's repo sometimes returns temporary 502 errors
+      - name: Build with Maven
+        run: |
+          for i in 1 2 3; do
+            mvn -B -ntp clean package && exit 0
+            echo "Build attempt $i failed, retrying in 20s..."
+            sleep 20
+          done
+          exit 1
+
+      # Shade also leaves original-DiscordBridge-*.jar (no libraries) - remove it
+      - name: Remove unshaded jar
+        run: rm -f proxy/target/original-*.jar
+
+      - name: Upload proxy jar (Velocity)
+        uses: actions/upload-artifact@v4
+        with:
+          name: DiscordBridge-Velocity
+          path: proxy/target/DiscordBridge-*.jar
+          if-no-files-found: error
+
+      - name: Upload backend jar (Paper)
+        uses: actions/upload-artifact@v4
+        with:
+          name: DiscordBridge-Backend-Paper
+          path: backend/target/DiscordBridge-Backend-*.jar
+          if-no-files-found: error
+
+      # Pushing a tag like v1.3.2 also publishes a GitHub Release with both jars
+      - name: Create release
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            proxy/target/DiscordBridge-*.jar
+            backend/target/DiscordBridge-Backend-*.jar
+          generate_release_notes: true
