@@ -1,0 +1,14 @@
+name: DiscordBridge-Backend
+version: '${project.version}'
+main: dev.discordbridge.backend.BridgeBackend
+api-version: '1.21'
+description: Sends deaths, kills and advancements to the DiscordBridge Velocity plugin
+commands:
+  bridgereload:
+    description: Reload the DiscordBridge-Backend config
+    usage: /bridgereload
+    permission: discordbridge.reload
+permissions:
+  discordbridge.reload:
+    description: Allows /bridgereload
+    default: op

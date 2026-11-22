@@ -1,0 +1,20 @@
+# DiscordBridge-Backend
+# Install this jar on every backend server (Lobby, SMP, Events). It does not talk to Discord itself:
+# it hands deaths / kills / advancements to the DiscordBridge plugin on Velocity, which posts them.
+#
+# Which servers actually announce what is decided on the proxy (announce-deaths.events=false etc. in
+# the proxy's config.properties). The switches below only stop this server from sending at all.
+# Reload with /bridgereload - no restart needed.
+
+events:
+  # Player deaths (also used for kills, the proxy picks the right message)
+  deaths: true
+  # Advancements / achievements that Minecraft announces in chat
+  advancements: true
+  # Chat sent to Discord / other servers. It is sent AFTER ChatSentry (or any chat filter) ran, so
+  # censored words stay censored in Discord and blocked messages never reach Discord.
+  # Needs "chat-from-backend=true" (default) in the proxy's config.properties.
+  chat: true
+
+# true = log every chat message this server sends to the proxy (shows the text AFTER ChatSentry ran)
+debug: false
